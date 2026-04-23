@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String
+  email         String?    @unique
+  password      String?
+  currentNumber Int        @default(0)
+  isAdmin       Boolean    @default(false)
+  isManaged     Boolean    @default(false)
+  managedById   String?
+  managedBy     User?      @relation("ManagedUsers", fields: [managedById], references: [id])
+  managedUsers  User[]     @relation("ManagedUsers")
+  createdAt     DateTime   @default(now())
+
+  sightings           Sighting[] @relation("UserSightings")
+  registeredSightings Sighting[] @relation("RegisteredBy")
+  inviteUsed          Invite?    @relation("UsedInvite")
+  createdInvites      Invite[]   @relation("CreatedInvites")
+}
+
+model Invite {
+  id          String    @id @default(cuid())
+  code        String    @unique
+  createdById String
+  createdBy   User      @relation("CreatedInvites", fields: [createdById], references: [id])
+  usedById    String?   @unique
+  usedBy      User?     @relation("UsedInvite", fields: [usedById], references: [id])
+  createdAt   DateTime  @default(now())
+  usedAt      DateTime?
+}
+
+model Sighting {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation("UserSightings", fields: [userId], references: [id])
+  plateNumber    Int
+  registeredById String
+  registeredBy   User     @relation("RegisteredBy", fields: [registeredById], references: [id])
+  timestamp      DateTime @default(now())
+}
